@@ -12,7 +12,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LeadFlow CRM Dashboard</title>
+    <title>LeadFlow CRM by Manoj Vellingiri — ASP.NET Core Lead Management</title>
     <!-- Bootstrap 5 Dark CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/style.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -249,6 +249,69 @@
             color: var(--text-main);
             box-shadow: none;
         }
+
+        /* Lead Details Drawer */
+        .detail-drawer .modal-dialog {
+            max-width: 580px;
+        }
+
+        .detail-section {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-section h6 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary-accent);
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            padding: 0.3rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .detail-row:last-child { border-bottom: none; }
+
+        .detail-row .label { color: var(--text-muted); }
+        .detail-row .value { color: var(--text-main); font-weight: 500; text-align: right; max-width: 60%; }
+
+        .timeline-entry {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            font-size: 0.85rem;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .timeline-entry:last-child { border-bottom: none; }
+
+        .timeline-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            flex-shrink: 0;
+            margin-top: 5px;
+        }
+
+        .timeline-time { color: var(--text-muted); font-size: 0.75rem; }
+
+        .badge-status {
+            padding: 0.25rem 0.65rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -257,7 +320,7 @@
         <header class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h1>LeadFlow CRM</h1>
-                <p class="text-muted mb-0">ASP.NET Core C# Sales Pipeline & Analytics Dashboard</p>
+                <p class="text-muted mb-0">by Manoj Vellingiri &nbsp;·&nbsp; ASP.NET Core C# Sales Pipeline &amp; Analytics</p>
             </div>
             <button class="btn btn-primary" style="background: linear-gradient(135deg, var(--primary), #5c1bb5); border:none;" data-bs-toggle="modal" data-bs-target="#createLeadModal">
                 + Add Custom Lead
@@ -453,27 +516,52 @@
         </div>
     </div>
 
-    <!-- Modal: View Details -->
-    <div class="modal fade" id="viewDetailsModal" tabindex="-1" aria-hidden="true">
+    <!-- Lead Details Drawer -->
+    <div class="modal fade detail-drawer" id="viewDetailsModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="detailName">Lead Detail</h5>
+                    <div>
+                        <h5 class="modal-title mb-0" id="detailName">Lead Profile</h5>
+                        <small class="text-muted" id="detailStatus"></small>
+                    </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom: 0.75rem;">
-                        <strong>Email:</strong> <span id="detailEmail"></span><br>
-                        <strong>Niche:</strong> <span id="detailNiche"></span><br>
-                        <strong>Revenue:</strong> <span id="detailRevenue"></span><br>
-                        <strong>Bottleneck:</strong> <span id="detailBottleneck"></span>
-                    </p>
-                    <hr style="border-color:var(--border-color);">
-                    <h6 class="mb-2">Outreach Notes & Activity Log:</h6>
-                    <p id="detailNotes" style="font-size:0.95rem; line-height: 1.5; white-space: pre-wrap;"></p>
+                <div class="modal-body" style="padding: 1.25rem;">
+
+                    <!-- Contact Info -->
+                    <div class="detail-section">
+                        <h6>📋 Contact Information</h6>
+                        <div class="detail-row"><span class="label">Email</span><span class="value" id="detailEmail"></span></div>
+                        <div class="detail-row"><span class="label">Niche / Industry</span><span class="value" id="detailNiche"></span></div>
+                        <div class="detail-row"><span class="label">Monthly Revenue</span><span class="value" id="detailRevenue"></span></div>
+                        <div class="detail-row"><span class="label">Main Bottleneck</span><span class="value" id="detailBottleneck"></span></div>
+                    </div>
+
+                    <!-- Appointment Info -->
+                    <div class="detail-section">
+                        <h6>📅 Appointment & Booking</h6>
+                        <div class="detail-row"><span class="label">Discovery Call Date</span><span class="value" id="detailApptDate" style="color: var(--success);"></span></div>
+                        <div class="detail-row"><span class="label">Last Contact</span><span class="value" id="detailLastContact"></span></div>
+                        <div class="detail-row"><span class="label">Next Action</span><span class="value" id="detailNextAction" style="color: var(--warning);"></span></div>
+                    </div>
+
+                    <!-- Activity Timeline -->
+                    <div class="detail-section">
+                        <h6>🕐 Contact History & Activity Log</h6>
+                        <div id="detailTimeline"></div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="detail-section">
+                        <h6>📝 Qualification Notes</h6>
+                        <p id="detailNotes" style="font-size:0.875rem; line-height: 1.6; white-space: pre-wrap; color: var(--text-muted); margin: 0;"></p>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" style="background:var(--primary); border:none;"
+                        onclick="alert('Schedule feature: Connect to Calendly or GHL calendar API.')">📅 Schedule Call</button>
                 </div>
             </div>
         </div>
@@ -535,15 +623,77 @@
             }
         }
 
-        // View Details Modal Trigger
+        // View Details Drawer Trigger
         const detailModal = new bootstrap.Modal(document.getElementById('viewDetailsModal'));
         function viewDetails(id, name, email, niche, revenue, bottleneck, notes) {
-            document.getElementById('detailName').innerText = name + " (ID: " + id + ")";
-            document.getElementById('detailEmail').innerText = email;
-            document.getElementById('detailNiche').innerText = niche;
-            document.getElementById('detailRevenue').innerText = revenue;
-            document.getElementById('detailBottleneck').innerText = bottleneck;
-            document.getElementById('detailNotes').innerText = notes || "No outreach notes recorded.";
+            // Contact info
+            document.getElementById('detailName').innerText = name;
+            document.getElementById('detailEmail').innerText = email || 'Not provided';
+            document.getElementById('detailNiche').innerText = niche || '—';
+            document.getElementById('detailRevenue').innerText = revenue || '—';
+            document.getElementById('detailBottleneck').innerText = bottleneck || '—';
+            document.getElementById('detailNotes').innerText = notes || 'No qualification notes recorded yet.';
+
+            // Determine current status from Kanban card position
+            const card = document.getElementById('lead-' + id);
+            const colEl = card ? card.closest('.kanban-column') : null;
+            const status = colEl ? colEl.id.replace('col-', '') : 'Unknown';
+            document.getElementById('detailStatus').innerText = 'Pipeline Status: ' + status;
+
+            // Mock appointment/booking data based on status
+            const today = new Date();
+            const fmt = (d) => d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+            const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+            const nextWeek  = new Date(today); nextWeek.setDate(today.getDate() + 7);
+            const threeDays = new Date(today); threeDays.setDate(today.getDate() - 3);
+
+            if (status === 'Booked') {
+                document.getElementById('detailApptDate').innerText = fmt(nextWeek) + ' — 10:00 AM';
+                document.getElementById('detailLastContact').innerText = fmt(yesterday);
+                document.getElementById('detailNextAction').innerText = 'Send calendar confirmation';
+            } else if (status === 'Qualified') {
+                document.getElementById('detailApptDate').innerText = 'Pending — awaiting booking';
+                document.getElementById('detailLastContact').innerText = fmt(threeDays);
+                document.getElementById('detailNextAction').innerText = 'Follow up with Calendly link';
+            } else if (status === 'Contacted') {
+                document.getElementById('detailApptDate').innerText = 'Not yet scheduled';
+                document.getElementById('detailLastContact').innerText = fmt(threeDays);
+                document.getElementById('detailNextAction').innerText = 'Send qualification questions';
+            } else {
+                document.getElementById('detailApptDate').innerText = 'Not yet scheduled';
+                document.getElementById('detailLastContact').innerText = 'No contact yet';
+                document.getElementById('detailNextAction').innerText = 'Send initial outreach message';
+            }
+
+            // Generate activity timeline
+            const timelines = {
+                'Booked':    [
+                    { dot: '#30d5c8', time: fmt(nextWeek), text: '📅 Discovery call scheduled' },
+                    { dot: '#9d4edd', time: fmt(yesterday), text: '✅ Lead qualified — Calendly link sent' },
+                    { dot: '#9d4edd', time: fmt(threeDays), text: '💬 Qualification conversation completed' },
+                    { dot: '#ffb703', time: fmt(new Date(today.setDate(today.getDate()-5))), text: '📨 Initial DM outreach sent' },
+                ],
+                'Qualified': [
+                    { dot: '#9d4edd', time: fmt(yesterday), text: '✅ Lead passed qualification criteria' },
+                    { dot: '#ffb703', time: fmt(threeDays), text: '💬 Revenue & bottleneck discussed' },
+                    { dot: '#ffb703', time: fmt(new Date(new Date().setDate(new Date().getDate()-5))), text: '📨 Initial contact made' },
+                ],
+                'Contacted': [
+                    { dot: '#ffb703', time: fmt(threeDays), text: '💬 Qualification questions sent' },
+                    { dot: '#ffb703', time: fmt(new Date(new Date().setDate(new Date().getDate()-5))), text: '📨 Initial DM outreach sent' },
+                ],
+                'New': [
+                    { dot: '#9ca3af', time: fmt(new Date()), text: '📋 Lead added to pipeline' },
+                ]
+            };
+            const entries = timelines[status] || timelines['New'];
+            document.getElementById('detailTimeline').innerHTML = entries.map(e =>
+                `<div class="timeline-entry">
+                    <div class="timeline-dot" style="background:${e.dot}"></div>
+                    <div><div>${e.text}</div><div class="timeline-time">${e.time}</div></div>
+                </div>`
+            ).join('');
+
             detailModal.show();
         }
 

@@ -1,0 +1,32 @@
+# Binaries and build folders
+bin/
+obj/
+
+# User-specific files
+*.user
+*.userosscache
+*.sln.docstates
+
+# Mono auto generated files
+mono_crash.*
+
+# Visual Studio cache and settings
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+# SQLite temporary/journal files (lock files)
+*.db-shm
+*.db-wal
+*.db-journal
+
+# Rider / JetBrains
+.idea/
+
+# OS metadata
+.DS_Store
+Thumbs.db

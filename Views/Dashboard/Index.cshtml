@@ -1,0 +1,648 @@
+@model IEnumerable<aspnet_crm_dashboard.Models.Lead>
+
+@{
+    Layout = null;
+    var totalLeads = Model.Count();
+    var averageFit = totalLeads > 0 ? Model.Average(l => l.FitScore) : 0;
+    var bookedCalls = Model.Count(l => l.Status == "Booked");
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeadFlow CRM Dashboard</title>
+    <!-- Bootstrap 5 Dark CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/style.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0c0d12;
+            --card-bg: rgba(22, 24, 33, 0.65);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary: #9d4edd;
+            --primary-accent: #00f5ff;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --success: #30d5c8;
+            --warning: #ffb703;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 10% 15%, rgba(157, 78, 221, 0.15) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 85%, rgba(0, 245, 255, 0.1) 0%, transparent 40%);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+
+        .container {
+            max-width: 1300px;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text-main) 40%, var(--primary-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* KPI Cards */
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: rgba(30, 32, 45, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .kpi-val {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-top: 0.25rem;
+        }
+
+        .kpi-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-icon {
+            font-size: 2.2rem;
+            opacity: 0.85;
+        }
+
+        /* Charts Row */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @@media (max-width: 900px) {
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Kanban Styles */
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            align-items: start;
+        }
+
+        @@media (max-width: 1000px) {
+            .kanban-board {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .kanban-column {
+            background: rgba(18, 20, 29, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            min-height: 500px;
+            transition: background 0.2s;
+        }
+
+        .kanban-column.drag-over {
+            background: rgba(157, 78, 221, 0.08);
+            border-color: var(--primary-accent);
+        }
+
+        .column-header {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .column-badge {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .lead-card {
+            background: rgba(30, 33, 46, 0.85);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .lead-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .lead-card:active {
+            cursor: grabbing;
+        }
+
+        .lead-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .lead-niche {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            background: transparent;
+        }
+
+        .fit-tag {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        .fit-high {
+            background: rgba(48, 213, 200, 0.12);
+            color: var(--success);
+        }
+
+        .fit-med {
+            background: rgba(255, 183, 3, 0.12);
+            color: var(--warning);
+        }
+
+        .fit-low {
+            background: rgba(255, 69, 0, 0.12);
+            color: #ff4500;
+        }
+
+        /* Modal styling helper */
+        .modal-content {
+            background-color: #161821;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .modal-header {
+            border-bottom-color: var(--border-color);
+        }
+
+        .modal-footer {
+            border-top-color: var(--border-color);
+        }
+
+        .form-control, .form-select {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary-accent);
+            color: var(--text-main);
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>LeadFlow CRM</h1>
+                <p class="text-muted mb-0">ASP.NET Core C# Sales Pipeline & Analytics Dashboard</p>
+            </div>
+            <button class="btn btn-primary" style="background: linear-gradient(135deg, var(--primary), #5c1bb5); border:none;" data-bs-toggle="modal" data-bs-target="#createLeadModal">
+                + Add Custom Lead
+            </button>
+        </header>
+
+        <!-- KPI Row -->
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-label">Active Database Leads</div>
+                    <div class="kpi-val">@totalLeads</div>
+                </div>
+                <div class="kpi-icon" style="color: var(--primary-accent);">📋</div>
+            </div>
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-label">Average Fit Score</div>
+                    <div class="kpi-val">@averageFit.ToString("F1")/10</div>
+                </div>
+                <div class="kpi-icon" style="color: var(--warning);">⚡</div>
+            </div>
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-label">Booked Calls</div>
+                    <div class="kpi-val">@bookedCalls</div>
+                </div>
+                <div class="kpi-icon" style="color: var(--success);">📞</div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+            <div class="glass-card">
+                <h2>Pipeline Distribution</h2>
+                <div style="height: 250px; position: relative; width: 100%;">
+                    <canvas id="pipelineChart"></canvas>
+                </div>
+            </div>
+            <div class="glass-card">
+                <h2>Niche Quality Analysis</h2>
+                <div style="height: 250px; position: relative; width: 100%;">
+                    <canvas id="fitChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="glass-card">
+            <h2>Outbound Setting Pipeline (HTML5 Drag & Drop)</h2>
+            <div class="kanban-board mt-4">
+                <!-- Column: New -->
+                <div class="kanban-column" id="col-New" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'New')">
+                    <div class="column-header">
+                        <span>New Prospects</span>
+                        <span class="column-badge">@Model.Count(l => l.Status == "New")</span>
+                    </div>
+                    @foreach (var lead in Model.Where(l => l.Status == "New"))
+                    {
+                        <div class="lead-card" id="lead-@lead.Id" draggable="true" ondragstart="drag(event, @lead.Id)">
+                            <div class="lead-title">@lead.Name</div>
+                            <div class="lead-niche">@lead.Niche</div>
+                            <div class="card-footer">
+                                <span class="fit-tag @(lead.FitScore >= 8 ? "fit-high" : lead.FitScore >= 5 ? "fit-med" : "fit-low")">
+                                    Score: @lead.FitScore/10
+                                </span>
+                                <button class="btn btn-sm btn-link text-info p-0" onclick="viewDetails(@lead.Id, '@lead.Name', '@lead.Email', '@lead.Niche', '@lead.Revenue', '@lead.Bottleneck', '@lead.Notes')">Notes</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Column: Contacted -->
+                <div class="kanban-column" id="col-Contacted" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'Contacted')">
+                    <div class="column-header">
+                        <span>Contacted</span>
+                        <span class="column-badge">@Model.Count(l => l.Status == "Contacted")</span>
+                    </div>
+                    @foreach (var lead in Model.Where(l => l.Status == "Contacted"))
+                    {
+                        <div class="lead-card" id="lead-@lead.Id" draggable="true" ondragstart="drag(event, @lead.Id)">
+                            <div class="lead-title">@lead.Name</div>
+                            <div class="lead-niche">@lead.Niche</div>
+                            <div class="card-footer">
+                                <span class="fit-tag @(lead.FitScore >= 8 ? "fit-high" : lead.FitScore >= 5 ? "fit-med" : "fit-low")">
+                                    Score: @lead.FitScore/10
+                                </span>
+                                <button class="btn btn-sm btn-link text-info p-0" onclick="viewDetails(@lead.Id, '@lead.Name', '@lead.Email', '@lead.Niche', '@lead.Revenue', '@lead.Bottleneck', '@lead.Notes')">Notes</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Column: Qualified -->
+                <div class="kanban-column" id="col-Qualified" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'Qualified')">
+                    <div class="column-header">
+                        <span>Qualified Leads</span>
+                        <span class="column-badge">@Model.Count(l => l.Status == "Qualified")</span>
+                    </div>
+                    @foreach (var lead in Model.Where(l => l.Status == "Qualified"))
+                    {
+                        <div class="lead-card" id="lead-@lead.Id" draggable="true" ondragstart="drag(event, @lead.Id)">
+                            <div class="lead-title">@lead.Name</div>
+                            <div class="lead-niche">@lead.Niche</div>
+                            <div class="card-footer">
+                                <span class="fit-tag @(lead.FitScore >= 8 ? "fit-high" : lead.FitScore >= 5 ? "fit-med" : "fit-low")">
+                                    Score: @lead.FitScore/10
+                                </span>
+                                <button class="btn btn-sm btn-link text-info p-0" onclick="viewDetails(@lead.Id, '@lead.Name', '@lead.Email', '@lead.Niche', '@lead.Revenue', '@lead.Bottleneck', '@lead.Notes')">Notes</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Column: Booked -->
+                <div class="kanban-column" id="col-Booked" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'Booked')">
+                    <div class="column-header">
+                        <span>Booked Calls</span>
+                        <span class="column-badge">@Model.Count(l => l.Status == "Booked")</span>
+                    </div>
+                    @foreach (var lead in Model.Where(l => l.Status == "Booked"))
+                    {
+                        <div class="lead-card" id="lead-@lead.Id" draggable="true" ondragstart="drag(event, @lead.Id)">
+                            <div class="lead-title">@lead.Name</div>
+                            <div class="lead-niche">@lead.Niche</div>
+                            <div class="card-footer">
+                                <span class="fit-tag @(lead.FitScore >= 8 ? "fit-high" : lead.FitScore >= 5 ? "fit-med" : "fit-low")">
+                                    Score: @lead.FitScore/10
+                                </span>
+                                <button class="btn btn-sm btn-link text-info p-0" onclick="viewDetails(@lead.Id, '@lead.Name', '@lead.Email', '@lead.Niche', '@lead.Revenue', '@lead.Bottleneck', '@lead.Notes')">Notes</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Create Lead -->
+    <div class="modal fade" id="createLeadModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="/Dashboard/CreateLead" method="POST">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Create Custom CRM Lead</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Prospect Name</label>
+                            <input type="text" class="form-control" name="Name" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" class="form-control" name="Email" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Business Niche / Industry</label>
+                            <input type="text" class="form-control" name="Niche" placeholder="e.g. Sales Coach, Medspa" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status Stage</label>
+                            <select class="form-select" name="Status">
+                                <option value="New">New</option>
+                                <option value="Contacted">Contacted</option>
+                                <option value="Qualified">Qualified</option>
+                                <option value="Booked">Booked</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Monthly Revenue</label>
+                            <input type="text" class="form-control" name="Revenue" value="Unknown" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Outreach Bottleneck</label>
+                            <input type="text" class="form-control" name="Bottleneck" value="None" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Fit Score (1 to 10)</label>
+                            <input type="number" class="form-control" name="FitScore" min="1" max="10" value="5" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Outreach Notes / Details</label>
+                            <textarea class="form-control" name="Notes" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" style="background:var(--primary); border:none;">Create Lead</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: View Details -->
+    <div class="modal fade" id="viewDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailName">Lead Detail</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom: 0.75rem;">
+                        <strong>Email:</strong> <span id="detailEmail"></span><br>
+                        <strong>Niche:</strong> <span id="detailNiche"></span><br>
+                        <strong>Revenue:</strong> <span id="detailRevenue"></span><br>
+                        <strong>Bottleneck:</strong> <span id="detailBottleneck"></span>
+                    </p>
+                    <hr style="border-color:var(--border-color);">
+                    <h6 class="mb-2">Outreach Notes & Activity Log:</h6>
+                    <p id="detailNotes" style="font-size:0.95rem; line-height: 1.5; white-space: pre-wrap;"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap & Chart.js scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // HTML5 Drag and Drop operations
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function dragEnter(ev) {
+            ev.currentTarget.classList.add('drag-over');
+        }
+
+        function dragLeave(ev) {
+            ev.currentTarget.classList.remove('drag-over');
+        }
+
+        function drag(ev, leadId) {
+            ev.dataTransfer.setData("text", leadId);
+        }
+
+        function drop(ev, status) {
+            ev.preventDefault();
+            ev.currentTarget.classList.remove('drag-over');
+            
+            var id = ev.dataTransfer.getData("text");
+            var card = document.getElementById("lead-" + id);
+            if (card) {
+                // Append card visually
+                ev.currentTarget.appendChild(card);
+                
+                // Fire API post to save state in SQLite
+                var formData = new FormData();
+                formData.append("id", id);
+                formData.append("status", status);
+
+                fetch("/Dashboard/UpdateStatus", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log("Lead " + id + " updated to status " + status);
+                        // Refresh charts
+                        refreshCharts();
+                    } else {
+                        alert("Update failed: " + data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error("Error updating status:", err);
+                });
+            }
+        }
+
+        // View Details Modal Trigger
+        const detailModal = new bootstrap.Modal(document.getElementById('viewDetailsModal'));
+        function viewDetails(id, name, email, niche, revenue, bottleneck, notes) {
+            document.getElementById('detailName').innerText = name + " (ID: " + id + ")";
+            document.getElementById('detailEmail').innerText = email;
+            document.getElementById('detailNiche').innerText = niche;
+            document.getElementById('detailRevenue').innerText = revenue;
+            document.getElementById('detailBottleneck').innerText = bottleneck;
+            document.getElementById('detailNotes').innerText = notes || "No outreach notes recorded.";
+            detailModal.show();
+        }
+
+        // Chart.js Integrations
+        let pipelineChart, fitChart;
+
+        function initCharts(data) {
+            // Pipeline chart
+            const pipelineCtx = document.getElementById('pipelineChart').getContext('2d');
+            pipelineChart = new Chart(pipelineCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.pipelineLabels,
+                    datasets: [{
+                        label: 'Active Leads',
+                        data: data.pipelineCounts,
+                        backgroundColor: 'rgba(157, 78, 221, 0.45)',
+                        borderColor: '#9d4edd',
+                        borderWidth: 2,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#8e8e93', precision: 0 }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#8e8e93' }
+                        }
+                    }
+                }
+            });
+
+            // Fit Analysis Doughnut chart
+            const fitCtx = document.getElementById('fitChart').getContext('2d');
+            fitChart = new Chart(fitCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.fitLabels,
+                    datasets: [{
+                        data: data.fitCounts,
+                        backgroundColor: [
+                            'rgba(48, 213, 200, 0.45)', // High Fit (Teal)
+                            'rgba(255, 183, 3, 0.45)',  // Medium Fit (Gold)
+                            'rgba(255, 69, 0, 0.45)'    // Poor Fit (Red-Orange)
+                        ],
+                        borderColor: [
+                            '#30d5c8',
+                            '#ffb703',
+                            '#ff4500'
+                        ],
+                        borderWidth: 1.5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: '#f3f4f6', font: { family: 'Outfit' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function refreshCharts() {
+            fetch("/Dashboard/GetChartData")
+            .then(res => res.json())
+            .then(data => {
+                if (pipelineChart && fitChart) {
+                    pipelineChart.data.datasets[0].data = data.pipelineCounts;
+                    pipelineChart.update();
+
+                    fitChart.data.datasets[0].data = data.fitCounts;
+                    fitChart.update();
+                }
+            })
+            .catch(err => console.error("Error refreshing charts:", err));
+        }
+
+        // Run on Page Load
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch("/Dashboard/GetChartData")
+            .then(res => res.json())
+            .then(data => {
+                initCharts(data);
+            })
+            .catch(err => console.error("Error initializing charts:", err));
+        });
+    </script>
+</body>
+</html>
